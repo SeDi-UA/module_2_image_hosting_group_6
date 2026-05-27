@@ -12,7 +12,7 @@ class ImageServerHandler(http.server.BaseHTTPRequestHandler):
         routes = {
             '/': 'form/index.html',
             '/upload': 'form/upload.html',
-            '/images-list': 'form/images.html'
+            '/images': 'form/images.html'
         }
 
         if self.path in routes:

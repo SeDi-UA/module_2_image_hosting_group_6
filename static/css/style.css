@@ -86,8 +86,8 @@ body {
     width: 400px;
 }
 
-/* upload-tabs */
-.upload__tabs {
+/* nav_tabs */
+.nav__tabs {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -96,22 +96,18 @@ body {
 
 }
 
-.upload__tab {
+.nav__tab {
     all: unset;
     font-size: 20px;
     font-weight: bold;
     color: rgb(173, 192, 248); /* Неактивный цвет по умолчанию */
 }
 
-.upload__tab--active {
+.nav__tab--active {
     color: rgb(0, 96, 255); /* Активный цвет */
 }
 
-.upload__tab:hover {
-    color: rgb(105, 141, 250);
-}
-
-.upload__tab:hover {
+.nav__tab:hover {
     color: rgb(105, 141, 250);
 }
 

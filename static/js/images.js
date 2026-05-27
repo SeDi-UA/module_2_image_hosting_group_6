@@ -12,16 +12,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const uploadTab = document.getElementById('upload-tab-btn');
         const imagesTab = document.getElementById('images-tab-btn');
         const storedFiles = JSON.parse(localStorage.getItem('uploadedImages')) || [];
+        const isImagesPage = window.location.pathname.includes('images');
 
-        const isImagesPage = window.location.pathname.includes('/images.html');
-
-        uploadTab.classList.remove('upload__tab--active');
-        imagesTab.classList.remove('upload__tab--active');
+        uploadTab.classList.remove('nav__tab--active');
+        imagesTab.classList.remove('nav__tab--active');
 
         if (isImagesPage) {
-            imagesTab.classList.add('upload__tab--active');
+            imagesTab.classList.add('nav__tab--active');
         } else {
-            uploadTab.classList.add('upload__tab--active');
+            uploadTab.classList.add('nav__tab--active');
         }
     };
 
