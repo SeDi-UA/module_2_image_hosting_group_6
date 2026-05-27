@@ -1,26 +1,33 @@
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('keydown', function (event) {
         if (event.key === 'Escape' || event.key === 'F5') {
             event.preventDefault();
-
             sessionStorage.removeItem('pageWasVisited');
-            window.location.href = '../index.html';
+            window.location.href = '/';
         }
     });
-});
 
-document.addEventListener('DOMContentLoaded', () => {
     const fileUpload = document.getElementById('file-upload');
     const imagesButton = document.getElementById('images-tab-btn');
     const dropzone = document.querySelector('.upload__dropzone');
     const currentUploadInput = document.querySelector('.upload__input');
-    const copyButton = document.querySelector('.upload__copy');
+    const copyButton = document.querySelector('.upload__copy')
+    const statusEl = document.getElementById('status-message');
+
+    const showStatus = (text, type = 'success') => {
+        statusEl.textContent = text;
+        statusEl.className = 'status-message visible'
+        statusEl.classList.add(`status-message--${type}`);
+
+        setTimeout(() => {
+            statusEl.classList.remove(`visible`);
+        }, 7000);
+    };
 
     const updateTabStyles = () => {
         const uploadTab = document.getElementById('upload-tab-btn');
         const imagesTab = document.getElementById('images-tab-btn');
         const storedFiles = JSON.parse(localStorage.getItem('uploadedImages')) || [];
-
         const isImagesPage = window.location.pathname.includes('images.html');
 
         uploadTab.classList.remove('upload__tab--active');
@@ -38,20 +45,30 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         const storedFiles = JSON.parse(localStorage.getItem('uploadedImages')) || [];
-        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-        const MAX_SIZE_MB = 5;
-        const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
+        const allowedTypes = ['image/jpg','image/jpeg', 'image/png', 'image/gif'];
+        const MAX_SIZE_BYTES = 3 * 1024 * 1024;
         let filesAdded = false;
         let lastFileName = '';
 
         for (const file of files) {
-            if (!allowedTypes.includes(file.type) || file.size > MAX_SIZE_BYTES) {
+            if (!allowedTypes.includes(file.type)) {
+                showStatus("Invalid file type!", "error");
+                continue;
+            }
+            if (file.size > MAX_SIZE_BYTES) {
+                showStatus("Invalid file size too large!", "error");
                 continue;
             }
 
             const reader = new FileReader();
             reader.onload = (event) => {
-                const fileData = { name: file.name, url: event.target.result };
+                const fileData = {
+                    //  Додати генерацію унікального імені
+                    name: file.name,
+                    //  Додати генерацію унікального імені
+
+                    url: event.target.result
+                };
                 storedFiles.push(fileData);
                 localStorage.setItem('uploadedImages', JSON.stringify(storedFiles));
                 updateTabStyles();
@@ -65,9 +82,24 @@ document.addEventListener('DOMContentLoaded', () => {
             if (currentUploadInput) {
                 currentUploadInput.value = `https://sharefile.xyz/${lastFileName}`;
             }
-            alert("Files selected successfully! Go to the 'Images' tab to view them.");
+            showStatus("Files selected successfully! Go to the 'Images' tab to view them.");
         }
     };
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropzone.addEventListener(eventName, (event) => {
+            event.preventDefault();
+            dropzone.classList.add('upload__dropzone--dragover');
+        });
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropzone.addEventListener(eventName, (event) => {
+            event.preventDefault();
+            dropzone.classList.remove('upload__dropzone--dragover');
+            if (eventName === 'drop') handleAndStoreFiles(event.dataTransfer.files);
+        });
+    });
 
     if (copyButton && currentUploadInput) {
         copyButton.addEventListener('click', () => {
@@ -88,24 +120,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (imagesButton) {
         imagesButton.addEventListener('click', () => {
-            window.location.href = 'images.html';
+            window.location.href = '/images-list';
         });
     }
 
     fileUpload.addEventListener('change', (event) => {
         handleAndStoreFiles(event.target.files);
         event.target.value = '';
-    });
-
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-        dropzone.addEventListener(eventName, (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-        });
-    });
-
-    dropzone.addEventListener('drop', (event) => {
-        handleAndStoreFiles(event.dataTransfer.files);
     });
 
     updateTabStyles();

@@ -131,6 +131,14 @@ body {
     text-align: center;
 }
 
+.upload__dropzone--dragover {
+    background-color: rgba(0, 122, 255, 0.1); /* Легкий колір фону */
+    border: 2px dashed #007aff; /* Яскравіша рамка */
+    transform: scale(1.02); /* Трішки збільшуємо */
+    transition: all 0.3s ease;
+}
+
+
 .upload__icon {
     display: flex;
     justify-content: center;
@@ -152,7 +160,7 @@ body {
 /* upload-button */
 .upload__button {
     padding-top: 30px;
-    padding-bottom: 50px;
+    padding-bottom: 30px;
 }
 
 .upload__button-btn {
@@ -224,6 +232,33 @@ body {
     cursor: pointer;
 }
 
+.upload__dropzone--dragover {
+    background-color: #FFFFFF0C;
+    border: 2px dashed #00d1ff;
+    transform: scale(1.01);
+    transition: all 0.2s ease;
+}
+
+.status-message {
+    opacity: 0;
+    padding: 10px;
+    margin-bottom: 20px;
+    text-align: center;
+    transition: opacity 0.3s ease;
+    font-weight: bold;
+}
+
+.status-message.visible {
+    opacity: 1;
+}
+
+.status-message--success {
+    color: #02bf02;
+}
+
+.status-message--error {
+    color: #da0000;
+}
 
 /* Container for the entire table */
 .file-list-container {
