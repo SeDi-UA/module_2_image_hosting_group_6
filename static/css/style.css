@@ -119,6 +119,10 @@ body {
     padding-top: 50px;
 }
 
+.upload__dropzone * {
+    pointer-events: none;
+}
+
 .upload__dropzone {
     border: 2px dashed rgb(0, 96, 255);
     border-radius: 12px;
@@ -128,9 +132,9 @@ body {
 }
 
 .upload__dropzone--dragover {
-    background-color: rgba(0, 122, 255, 0.1); /* Легкий колір фону */
-    border: 2px dashed #007aff; /* Яскравіша рамка */
-    transform: scale(1.02); /* Трішки збільшуємо */
+    background-color: rgba(0, 122, 255, 0.1);
+    border: 2px dashed #007aff;
+    transform: scale(1.02);
     transition: all 0.3s ease;
 }
 
@@ -142,7 +146,7 @@ body {
     padding-top: 33px;
 }
 
-.upload__promt {
+.upload__prompt {
     padding-top: 24px;
     color: rgb(11, 11, 11);
 }
