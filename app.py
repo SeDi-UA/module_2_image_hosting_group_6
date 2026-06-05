@@ -10,6 +10,9 @@ import re
 
 from file_handler import validate_file
 
+MAX_FILES = 10
+MAX_REQUEST_SIZE = 50 * 1024 * 1024
+
 
 class ImageServerHandler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
@@ -52,52 +55,83 @@ class ImageServerHandler(http.server.BaseHTTPRequestHandler):
             boundary = content_type.split("boundary=")[1].encode()
             parts = raw_data.split(b'--' + boundary)
 
-            file_bytes = b""
-            filename = ""
+            uploaded_files = []
+            counter = 0
 
             for part in parts:
-                if b'Content-Disposition' in part and b'name="image"' in part:
+                if counter > MAX_FILES:
+                    return False, f"Too many files! Maximum allowed is {MAX_FILES} per request."
+
+                if b'Content-Disposition' in part and b'name="images"' in part:
                     headers_part, body_part = part.split(b'\r\n\r\n', 1)
+
+                    filename = ""
                     for line in headers_part.decode('utf-8', errors='ignore').split('\r\n'):
                         if 'filename=' in line:
                             filename = line.split('filename=')[1].strip('"')
+
                     if body_part.endswith(b'\r\n'):
                         file_bytes = body_part[:-2]
                     else:
                         file_bytes = body_part
-                    break
 
-            return file_bytes, filename
+                    if filename:
+                        uploaded_files.append({
+                            "bytes": file_bytes,
+                            "filename": filename
+                        })
+                        counter += 1
+
+            return True, uploaded_files
         except Exception as e:
             # logging.error(f"Критична помилка сервера: {e}", exc_info=True)
-            return None, None
+            return False, "No files uploaded or data is corrupted"
 
 
     def handle_upload(self):
+        content_length = int(self.headers.get('Content-Length', 0))
+        if content_length > MAX_REQUEST_SIZE:
+            self.send_json_response(413, {  # 413 - Payload Too Large
+                "status": "error",
+                "message": "Request entity too large!"
+            })
+            return
         content_type = self.headers.get('Content-Type', '')
         if not content_type.startswith('multipart/form-data'):
             self.send_json_response(400, {"status": "error", "message": "Expected multipart/form-data"})
             return
 
-        file_bytes, filename = self.get_content(content_type)
+        is_files, result = self.get_content(content_type)
 
-        if not file_bytes or not filename:
-            self.send_json_response(400, {"status": "error", "message": "No file uploaded or data is corrupted"})
+        if not is_files:
+            msg = result
+            self.send_json_response(400, {"status": "error", "message": msg})
             return
 
-        is_valid, message, unique_name = validate_file(file_bytes, filename)
+        response_files = []
 
-        if is_valid:
-            # logging.info(f"Файл {filename} успішно збережено як {unique_name}")
-            response_body = {
-                "status": "success",
-                "message": message,
-                "url": f"/images/{unique_name}"
-            }
-            self.send_json_response(200, response_body)
-        else:
-            # logging.warning(f"Валідація файлу {filename} провалена: {message}")
-            self.send_json_response(400, {"status": "error", "message": message})
+        for file_data in result:
+            file_bytes = file_data["bytes"]
+            filename = file_data["filename"]
+
+            is_valid, message, unique_name = validate_file(file_bytes, filename)
+
+            if is_valid:
+                response_files.append({
+                    "original_name": filename,
+                    "url": f"/images/{unique_name}"
+                })
+            else:
+                print(f"File {filename} failed server validation: {message}")
+
+        if not response_files:
+            self.send_json_response(400, {"status": "error", "message": "All uploaded files failed validation."})
+            return
+
+        self.send_json_response(200, {
+            "status": "success",
+            "files": response_files
+        })
 
     def server_response(self, path):
         try:

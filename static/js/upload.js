@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const currentUploadInput = document.querySelector('.upload__input');
     const copyButton = document.querySelector('.upload__copy')
     const statusEl = document.getElementById('status-message');
+    const MAX_FILE_COUNT = 10;
 
     const showStatus = (text, type = 'success') => {
         statusEl.textContent = text;
@@ -39,9 +40,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    const uploadFileToServer = async (file) => {
+    const uploadFilesToServer = async (filesArray) => {
         const formData = new FormData();
-        formData.append('image', file);
+
+        filesArray.forEach(file => {
+            formData.append('images', file);
+        });
 
         const response = await fetch('/upload', {
             method: 'POST',
@@ -60,47 +64,63 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!files || files.length === 0) {
             return;
         }
-        const storedFiles = JSON.parse(localStorage.getItem('uploadedImages')) || [];
+
+        if (files.length > MAX_FILE_COUNT) {
+            showStatus(`You cannot upload more than ${MAX_FILE_COUNT} files at once!`, "error");
+            return;
+        }
+
         const allowedTypes = ['image/jpg','image/jpeg', 'image/png', 'image/gif'];
         const MAX_SIZE_BYTES = 2 * 1024 * 1024;
-        let filesAdded = false;
-        let lastFileName = '';
+
+        const validFiles = [];
+        const skippedFiles = [];
 
         for (const file of files) {
             if (!allowedTypes.includes(file.type)) {
-                showStatus("Invalid file type!", "error");
+                skippedFiles.push(`${file.name} (wrong type)`);
                 continue;
             }
             if (file.size > MAX_SIZE_BYTES) {
-                showStatus("Invalid file size too large!", "error");
+                skippedFiles.push(`${file.name} (too large)`);
                 continue;
             }
-
-            try {
-                const result = await uploadFileToServer(file);
-
-                const fileData = {
-                    name: file.name,
-                    url: result.url
-                };
-
-                storedFiles.push(fileData);
-                filesAdded = true
-                lastUploadedUrl = result.url;
-            } catch (error) {
-                console.error(`Failed to upload ${file.name}:`, error)
-                showStatus(`Failed to upload ${file.name}: ${error.message}`, "error");
-            }
+            validFiles.push(file);
+        }
+        if (validFiles.length === 0) {
+            showStatus(`No valid files to upload. Skipped: ${skippedFiles.join(', ')}`, "error");
+            return;
         }
 
-        if (filesAdded) {
-            localStorage.setItem('uploadedImages', JSON.stringify(storedFiles));
-            updateTabStyles();
+        try {
+            const result = await uploadFilesToServer(validFiles);
+            const storedFiles = JSON.parse(localStorage.getItem('uploadedImages')) || [];
+            let lastUploadedUrl = '';
 
-            if (currentUploadInput) {
+            result.files.forEach(fileData => {
+                storedFiles.push({
+                    name: fileData.original_name, // Зберігаємо оригінальну назву
+                    url: fileData.url
+                });
+                lastUploadedUrl = fileData.url;
+            });
+
+            localStorage.setItem('uploadedImages', JSON.stringify(storedFiles));
+
+            if (currentUploadInput && lastUploadedUrl) {
                 currentUploadInput.value = `${window.location.origin}${lastUploadedUrl}`;
             }
-            showStatus("Files selected successfully! Go to the 'Images' tab to view them.");
+
+            // Формуємо красивий статус для користувача
+            if (skippedFiles.length > 0) {
+                showStatus(`Successfully uploaded ${validFiles.length} file(s). Skipped ${skippedFiles.length} invalid file(s).`, "success");
+            } else {
+                showStatus("All files uploaded successfully!", "success");
+            }
+
+        } catch (error) {
+            console.error('Upload failed:', error);
+            showStatus(`Upload failed: ${error.message}`, "error");
         }
     };
 
