@@ -27,7 +27,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const updateTabStyles = () => {
         const uploadTab = document.getElementById('upload-tab-btn');
         const imagesTab = document.getElementById('images-tab-btn');
-        const storedFiles = JSON.parse(localStorage.getItem('uploadedImages')) || [];
         const isImagesPage = window.location.pathname.includes('images');
 
         uploadTab.classList.remove('nav__tab--active');
@@ -40,13 +39,30 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    const handleAndStoreFiles = (files) => {
+    const uploadFileToServer = async (file) => {
+        const formData = new FormData();
+        formData.append('image', file);
+
+        const response = await fetch('/upload', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ message: 'Unknown server error' }));
+            throw new Error(errorData.message || `Server responded with status ${response.status}`);
+        }
+
+        return await response.json();
+    };
+
+    const handleAndStoreFiles = async (files) => {
         if (!files || files.length === 0) {
             return;
         }
         const storedFiles = JSON.parse(localStorage.getItem('uploadedImages')) || [];
         const allowedTypes = ['image/jpg','image/jpeg', 'image/png', 'image/gif'];
-        const MAX_SIZE_BYTES = 3 * 1024 * 1024;
+        const MAX_SIZE_BYTES = 2 * 1024 * 1024;
         let filesAdded = false;
         let lastFileName = '';
 
@@ -60,27 +76,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 continue;
             }
 
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const fileData = {
-                    //  Додати генерацію унікального імені
-                    name: file.name,
-                    //  Додати генерацію унікального імені
+            try {
+                const result = await uploadFileToServer(file);
 
-                    url: event.target.result
+                const fileData = {
+                    name: file.name,
+                    url: result.url
                 };
+
                 storedFiles.push(fileData);
-                localStorage.setItem('uploadedImages', JSON.stringify(storedFiles));
-                updateTabStyles();
-            };
-            reader.readAsDataURL(file);
-            filesAdded = true;
-            lastFileName = file.name;
+                filesAdded = true
+                lastUploadedUrl = result.url;
+            } catch (error) {
+                console.error(`Failed to upload ${file.name}:`, error)
+                showStatus(`Failed to upload ${file.name}: ${error.message}`, "error");
+            }
         }
 
         if (filesAdded) {
+            localStorage.setItem('uploadedImages', JSON.stringify(storedFiles));
+            updateTabStyles();
+
             if (currentUploadInput) {
-                currentUploadInput.value = `https://sharefile.xyz/${lastFileName}`;
+                currentUploadInput.value = `${window.location.origin}${lastUploadedUrl}`;
             }
             showStatus("Files selected successfully! Go to the 'Images' tab to view them.");
         }
