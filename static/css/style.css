@@ -42,6 +42,12 @@ body {
     height: 40px;
     border: none;
     border-radius: 7px;
+    cursor: pointer;
+}
+
+.header__button-btn:hover {
+    background-color: rgb(0, 76, 185);
+    transition: background-color 0.2s ease;
 }
 
 /* hero__img */
@@ -93,22 +99,23 @@ body {
     align-items: center;
     gap: 15px;
     padding-top: 50px;
-
 }
 
 .nav__tab {
     all: unset;
     font-size: 20px;
     font-weight: bold;
-    color: rgb(173, 192, 248); /* Неактивный цвет по умолчанию */
+    color: rgb(173, 192, 248);
+    cursor: pointer;
 }
 
 .nav__tab--active {
-    color: rgb(0, 96, 255); /* Активный цвет */
+    color: rgb(0, 96, 255);
 }
 
 .nav__tab:hover {
     color: rgb(105, 141, 250);
+    transition: background-color 0.2s ease;
 }
 
 /* upload-form */
@@ -129,15 +136,45 @@ body {
     width: 540px;
     height: 233px;
     text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 
+.upload__dropzone:hover,
 .upload__dropzone--dragover {
     background-color: rgba(0, 122, 255, 0.1);
-    border: 2px dashed #007aff;
-    transform: scale(1.02);
-    transition: all 0.3s ease;
+    border: 2px dashed #00d1ff;
+    transform: scale(1.01);
+    transition: all 0.2s ease;
 }
 
+.dropzone-status {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(0, 96, 255, 0.1);
+    border-top: 4px solid rgb(0, 96, 255);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-top: 40px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.text-success { color: #02bf02 !important; font-weight: bold; }
+.text-error { color: #da0000 !important; font-weight: bold; }
 
 .upload__icon {
     display: flex;
@@ -155,25 +192,6 @@ body {
     padding-top: 12px;
     font-size: 14px;
     color: rgb(173, 192, 248);
-}
-
-/* upload-button */
-.upload__button {
-    padding-top: 30px;
-    padding-bottom: 30px;
-}
-
-.upload__button-btn {
-    display: inline-block;
-    text-align: center;
-    cursor: pointer;
-    color: rgb(255, 255, 255);
-    width: 540px;
-    height: 40px;
-    border-radius: 7px;
-    background-color: rgb(0, 96, 255);
-    padding-top: 7px;
-    border: none;
 }
 
 /* upload-current */
@@ -243,11 +261,9 @@ body {
     cursor: pointer;
 }
 
-.upload__dropzone--dragover {
-    background-color: #FFFFFF0C;
-    border: 2px dashed #00d1ff;
-    transform: scale(1.01);
-    transition: all 0.2s ease;
+.upload__copy:hover {
+    background-color: rgb(0, 76, 185);
+    transition: background-color 0.2s ease;
 }
 
 .status-message {
@@ -348,7 +364,6 @@ body {
 /* Delete button */
 .delete-btn {
     background: transparent;
-    /* REMOVE THE BACKGROUND, MAKE IT TRANSPARENT */
     border: none;
     border-radius: 50%;
     cursor: pointer;
@@ -357,13 +372,9 @@ body {
     justify-content: center;
     padding: 0;
     transition: opacity 0.2s ease;
-    /* Add a smooth transition for hover effect */
 }
 
-/* Hover effect */
 .delete-btn:hover {
     background: transparent;
-    /* REMOVE BACKGROUND ON HOVER */
     opacity: 0.7;
-    /* Make the icon semi-transparent for user feedback */
 }

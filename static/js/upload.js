@@ -7,6 +7,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    const dropzoneDefault = document.getElementById('dropzone-default');
+    const dropzoneLoading = document.getElementById('dropzone-loading');
+    const dropzoneResult = document.getElementById('dropzone-result');
+    const dropzoneResultText = document.getElementById('dropzone-result-text');
+
     const fileUpload = document.getElementById('file-upload');
     const imagesButton = document.getElementById('images-tab-btn');
     const dropzone = document.querySelector('.upload__dropzone');
@@ -15,14 +20,30 @@ document.addEventListener('DOMContentLoaded', () => {
     const linksList = document.getElementById('links-list');
     const MAX_FILE_COUNT = 10;
 
-    const showStatus = (text, type = 'success') => {
-        statusEl.textContent = text;
-        statusEl.className = 'status-message visible'
-        statusEl.classList.add(`status-message--${type}`);
+    const changeDropzoneState = (state, text = '', type = 'success') => {
+        dropzoneDefault.style.display = 'none';
+        dropzoneLoading.style.display = 'none';
+        dropzoneResult.style.display = 'none';
 
-        setTimeout(() => {
-            statusEl.classList.remove(`visible`);
-        }, 7000);
+        dropzone.style.pointerEvents = 'auto';
+
+        if (state === 'loading') {
+            dropzoneLoading.style.display = 'flex';
+            dropzone.style.pointerEvents = 'none';
+        }
+        else if (state === 'result') {
+            dropzoneResult.style.display = 'flex';
+            dropzoneResultText.textContent = text;
+            dropzoneResultText.className = 'upload__prompt';
+            dropzoneResultText.classList.add(type === 'success' ? 'text-success' : 'text-error');
+
+            setTimeout(() => {
+                changeDropzoneState('default');
+            }, 3000);
+        }
+        else {
+            dropzoneDefault.style.display = 'block';
+        }
     };
 
     const updateTabStyles = () => {
@@ -66,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (files.length > MAX_FILE_COUNT) {
-            showStatus(`You cannot upload more than ${MAX_FILE_COUNT} files at once!`, "error");
+            changeDropzoneState('result', `You cannot upload more than ${MAX_FILE_COUNT} files at once!`, 'error');
             return;
         }
 
@@ -88,36 +109,35 @@ document.addEventListener('DOMContentLoaded', () => {
             validFiles.push(file);
         }
         if (validFiles.length === 0) {
-            showStatus(`No valid files to upload. Skipped: ${skippedFiles.join(', ')}`, "error");
+            changeDropzoneState('result', `Skipped: ${skippedFiles.join(', ')}`, 'error');
             return;
         }
+
+        changeDropzoneState('loading');
 
         try {
             const result = await uploadFilesToServer(validFiles);
             const storedFiles = JSON.parse(localStorage.getItem('uploadedImages')) || [];
-            let lastUploadedUrl = '';
 
             result.files.forEach(fileData => {
                 storedFiles.push({
                     name: fileData.original_name,
                     url: fileData.url
                 });
-                lastUploadedUrl = fileData.url;
             });
 
             localStorage.setItem('uploadedImages', JSON.stringify(storedFiles));
-
             renderUploadedLinks(result.files);
 
             if (skippedFiles.length > 0) {
-                showStatus(`Successfully uploaded ${validFiles.length} file(s). Skipped ${skippedFiles.length} invalid file(s).`, "success");
+                changeDropzoneState('result', `Uploaded ${validFiles.length} file(s). Skipped ${skippedFiles.length} invalid file(s).`, 'success');
             } else {
-                showStatus("All files uploaded successfully!", "success");
+                changeDropzoneState('result', "All files uploaded successfully!", 'success');
             }
 
         } catch (error) {
             console.error('Upload failed:', error);
-            showStatus(`Upload failed: ${error.message}`, "error");
+            changeDropzoneState('result', `Upload failed: ${error.message}`, 'error');
         }
     };
 
@@ -174,6 +194,14 @@ document.addEventListener('DOMContentLoaded', () => {
             dropzone.classList.remove('upload__dropzone--dragover');
             if (eventName === 'drop') handleAndStoreFiles(event.dataTransfer.files);
         });
+    });
+
+    dropzone.addEventListener('click', () => {
+        fileUpload.click();
+    });
+
+    fileUpload.addEventListener('click', (event) => {
+        event.stopPropagation();
     });
 
     if (imagesButton) {
