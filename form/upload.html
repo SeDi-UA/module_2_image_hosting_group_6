@@ -37,13 +37,10 @@
             <label for="file-upload" class="upload__button-btn">Browse your file</label>
         </div>
         <div id="status-message" class="status-message"></div>
-        <div class="upload__container">
+        <div class="upload__container" id="uploaded-files-container" style="display: none;">
             <div class="upload__group">
-                <h2 class="upload__title-current">Current Upload</h2>
-                <div class="upload__label">
-                    <input type="text" class="upload__input" placeholder="https://" readonly />
-                    <button class="upload__copy">COPY</button>
-                </div>
+                <h2 class="upload__title-current">Current Uploads</h2>
+                <div id="links-list"></div>
             </div>
         </div>
     </section>

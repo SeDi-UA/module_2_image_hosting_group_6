@@ -10,9 +10,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const fileUpload = document.getElementById('file-upload');
     const imagesButton = document.getElementById('images-tab-btn');
     const dropzone = document.querySelector('.upload__dropzone');
-    const currentUploadInput = document.querySelector('.upload__input');
-    const copyButton = document.querySelector('.upload__copy')
     const statusEl = document.getElementById('status-message');
+    const uploadedContainer = document.getElementById('uploaded-files-container');
+    const linksList = document.getElementById('links-list');
     const MAX_FILE_COUNT = 10;
 
     const showStatus = (text, type = 'success') => {
@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             result.files.forEach(fileData => {
                 storedFiles.push({
-                    name: fileData.original_name, // Зберігаємо оригінальну назву
+                    name: fileData.original_name,
                     url: fileData.url
                 });
                 lastUploadedUrl = fileData.url;
@@ -107,11 +107,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             localStorage.setItem('uploadedImages', JSON.stringify(storedFiles));
 
-            if (currentUploadInput && lastUploadedUrl) {
-                currentUploadInput.value = `${window.location.origin}${lastUploadedUrl}`;
-            }
+            renderUploadedLinks(result.files);
 
-            // Формуємо красивий статус для користувача
             if (skippedFiles.length > 0) {
                 showStatus(`Successfully uploaded ${validFiles.length} file(s). Skipped ${skippedFiles.length} invalid file(s).`, "success");
             } else {
@@ -122,6 +119,46 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Upload failed:', error);
             showStatus(`Upload failed: ${error.message}`, "error");
         }
+    };
+
+    const renderUploadedLinks = (uploadedFiles) => {
+        if (!linksList || !uploadedContainer) return;
+
+        linksList.innerHTML = '';
+
+        if (uploadedFiles.length === 0) {
+            uploadedContainer.style.display = 'none';
+            return;
+        }
+
+        uploadedContainer.style.display = 'block';
+
+        uploadedFiles.forEach((file, index) => {
+            const fullUrl = `${window.location.origin}${file.url}`;
+            const labelGroup = document.createElement('div');
+            labelGroup.className = 'upload__link-group';
+
+            labelGroup.innerHTML = `
+                <span class="upload__filename">${file.original_name}</span>
+                <div class="upload__label">
+                    <input type="text" class="upload__input" value="${fullUrl}" readonly />
+                    <button class="upload__copy">COPY</button>
+                </div>
+            `;
+
+            const copyBtn = labelGroup.querySelector('.upload__copy');
+
+            copyBtn.addEventListener('click', () => {
+                navigator.clipboard.writeText(fullUrl).then(() => {
+                    copyBtn.textContent = 'COPIED!';
+                    setTimeout(() => {
+                        copyBtn.textContent = 'COPY';
+                    }, 2000);
+                }).catch(err => console.error('Failed to copy: ', err));
+            });
+
+            linksList.appendChild(labelGroup);
+        });
     };
 
     ['dragenter', 'dragover'].forEach(eventName => {
@@ -138,23 +175,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (eventName === 'drop') handleAndStoreFiles(event.dataTransfer.files);
         });
     });
-
-    if (copyButton && currentUploadInput) {
-        copyButton.addEventListener('click', () => {
-            const textToCopy = currentUploadInput.value;
-
-            if (textToCopy && textToCopy !== 'https://') {
-                navigator.clipboard.writeText(textToCopy).then(() => {
-                    copyButton.textContent = 'COPIED!';
-                    setTimeout(() => {
-                        copyButton.textContent = 'COPY';
-                    }, 2000);
-                }).catch(err => {
-                    console.error('Failed to copy text: ', err);
-                });
-            }
-        });
-    }
 
     if (imagesButton) {
         imagesButton.addEventListener('click', () => {
