@@ -1,34 +1,37 @@
 import http.server
 import socketserver
 from pathlib import Path
-import os
-import uuid
 
 import json
-import io
-import re
 
-from file_handler import validate_file
+from file_handler import validate_file, UPLOAD_DIR
 
 MAX_FILES = 10
 MAX_REQUEST_SIZE = 50 * 1024 * 1024
+CONTENT_TYPES = {
+            '.css': 'text/css',
+            '.js': 'application/javascript',
+            '.png': 'image/png',
+            '.jpg': 'image/jpg',
+            '.jpeg': 'image/jpeg',
+            '.gif': 'image/gif',
+            '.html': 'text/html'
+        }
 
 
 class ImageServerHandler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
         routes = {
-            '/': 'form/index.html',
-            '/upload': 'form/upload.html',
-            '/images': 'form/images.html'
+            '/': lambda: self.server_response('form/index.html'),
+            '/upload': lambda: self.server_response('form/upload.html'),
+            '/images': lambda: self.server_response('form/images.html'),
+            '/api/images': self.handle_images
         }
 
         if self.path in routes:
-            self.server_response(routes[self.path])
-        elif self.path.startswith('/static/'):
+            routes[self.path]()
+        elif self.path.startswith(('/static/', '/images/')):
             self.server_response(self.path)
-            # self.serve_static(self.path)
-        # elif self.path.startswith('/images'):
-        #      self.handle_get_images()
         else:
             self.send_response(404)
             self.end_headers()
@@ -47,9 +50,8 @@ class ImageServerHandler(http.server.BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(json.dumps(data).encode('utf-8'))
 
-    def get_content(self, content_type):
+    def get_content(self, content_type, content_length):
         try:
-            content_length = int(self.headers.get('Content-Length', 0))
             raw_data = self.rfile.read(content_length)
 
             boundary = content_type.split("boundary=")[1].encode()
@@ -87,11 +89,22 @@ class ImageServerHandler(http.server.BaseHTTPRequestHandler):
             # logging.error(f"Критична помилка сервера: {e}", exc_info=True)
             return False, "No files uploaded or data is corrupted"
 
+    # def get_content_type(self, extension):
+    #     content_types = {
+    #         '.css': 'text/css',
+    #         '.js': 'application/javascript',
+    #         '.png': 'image/png',
+    #         '.jpg': 'image/jpg',
+    #         '.jpeg': 'image/jpeg',
+    #         '.gif': 'image/gif',
+    #         '.html': 'text/html'
+    #     }
+    #     return content_types.get(extension.lower(), 'application/octet-stream')
 
     def handle_upload(self):
         content_length = int(self.headers.get('Content-Length', 0))
         if content_length > MAX_REQUEST_SIZE:
-            self.send_json_response(413, {  # 413 - Payload Too Large
+            self.send_json_response(413, {
                 "status": "error",
                 "message": "Request entity too large!"
             })
@@ -101,7 +114,7 @@ class ImageServerHandler(http.server.BaseHTTPRequestHandler):
             self.send_json_response(400, {"status": "error", "message": "Expected multipart/form-data"})
             return
 
-        is_files, result = self.get_content(content_type)
+        is_files, result = self.get_content(content_type, content_length)
 
         if not is_files:
             msg = result
@@ -133,29 +146,38 @@ class ImageServerHandler(http.server.BaseHTTPRequestHandler):
             "files": response_files
         })
 
+    def handle_images(self):
+        files = []
+        if UPLOAD_DIR.exists():
+            for f in UPLOAD_DIR.iterdir():
+                files.append({
+                    "name": f.name,
+                    "url": f"/images/{f.name}"
+                })
+            files.sort(key=lambda x: (UPLOAD_DIR / x["name"]).stat().st_mtime, reverse=True)
+
+        self.send_json_response(200, {"status": "success", "images": files})
+
     def server_response(self, path):
         try:
             file_path = Path(__file__).parent / path.lstrip('/')
+
+            if not file_path.exists() or not file_path.is_file():
+                self.send_response(404)
+                self.end_headers()
+                return
+
             content = file_path.read_bytes()
             self.send_response(200)
-            self.send_header('Content-type', self.get_content_type(file_path.suffix))
+            content_type = CONTENT_TYPES.get(file_path.suffix.lower(), 'application/octet-stream')
+            self.send_header('Content-type', content_type)
+            if path.startswith('images/'):
+                self.send_header('Cache-Control', 'public, max-age=3600')
             self.end_headers()
             self.wfile.write(content)
-        except FileNotFoundError:
-            self.send_response(404)
+        except FileNotFoundError as e:
+            self.send_response(500)
             self.end_headers()
-
-    def get_content_type(self, extension):
-        content_types = {
-            '.css': 'text/css',
-            '.js': 'application/javascript',
-            '.png': 'image/png',
-            '.jpg': 'image/jpg',
-            '.jpeg': 'image/jpeg',
-            '.gif': 'image/gif',
-            '.html': 'text/html'
-        }
-        return content_types.get(extension.lower(), 'application/octet-stream')
 
 def run_server(port=8000):
     try:

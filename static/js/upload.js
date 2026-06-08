@@ -117,16 +117,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             const result = await uploadFilesToServer(validFiles);
-            const storedFiles = JSON.parse(localStorage.getItem('uploadedImages')) || [];
-
-            result.files.forEach(fileData => {
-                storedFiles.push({
-                    name: fileData.original_name,
-                    url: fileData.url
-                });
-            });
-
-            localStorage.setItem('uploadedImages', JSON.stringify(storedFiles));
             renderUploadedLinks(result.files);
 
             if (skippedFiles.length > 0) {

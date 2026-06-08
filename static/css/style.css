@@ -186,6 +186,14 @@ body {
 .upload__prompt {
     padding-top: 24px;
     color: rgb(11, 11, 11);
+    text-align: center;
+    margin-top: 30px;
+}
+
+.upload__prompt-error {
+    text-align: center;
+    margin-top: 50px;
+    color: rgb(218, 0, 0);
 }
 
 .upload__info {

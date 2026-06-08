@@ -11,7 +11,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const updateTabStyles = () => {
         const uploadTab = document.getElementById('upload-tab-btn');
         const imagesTab = document.getElementById('images-tab-btn');
-        const storedFiles = JSON.parse(localStorage.getItem('uploadedImages')) || [];
         const isImagesPage = window.location.pathname.includes('images');
 
         uploadTab.classList.remove('nav__tab--active');
@@ -24,59 +23,70 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    const displayFiles = () => {
-        const storedFiles = JSON.parse(localStorage.getItem('uploadedImages')) || [];
+    const displayFiles = async () => {
         fileListWrapper.innerHTML = '';
 
-        if (storedFiles.length === 0) {
-            fileListWrapper.innerHTML = '<p class="upload__promt" style="text-align: center; margin-top: 50px;">No images uploaded yet.</p>';
-        } else {
-            const container = document.createElement('div');
-            container.className = 'file-list-container';
-            const header = document.createElement('div');
-            header.className = 'file-list-header';
-            header.innerHTML = `
-                <div class="file-col file-col-name">Name</div>
-                <div class="file-col file-col-url">Url</div>
-                <div class="file-col file-col-delete">Delete</div>
-            `;
-            container.appendChild(header);
+        try {
+            const response = await fetch('/api/images');
+            if (!response.ok) {
+                throw new Error('Failed to fetch images from server');
+            }
 
-            const list = document.createElement('div');
-            list.id = 'file-list';
+            const result = await response.json();
+            const files = result.images || [];
 
-            storedFiles.forEach((fileData, index) => {
-                const fileItem = document.createElement('div');
-                fileItem.className = 'file-list-item';
-                fileItem.innerHTML = `
-                    <div class="file-col file-col-name">
-                        <span class="file-icon"><img src="../static/img/icon/Group.png" alt="file icon"></span>
-                        <span class="file-name">${fileData.name}</span>
-                    </div>
-                    <div class="file-col file-col-url">https://sharefile.xyz/${fileData.name}</div>
-                    <div class="file-col file-col-delete">
-                        <button class="delete-btn" data-index="${index}"><img src="../static/img/icon/delete.png" alt="delete icon"></button>
-                    </div>
+            if (files.length === 0) {
+                fileListWrapper.innerHTML = '<p class="upload__prompt">No images uploaded yet.</p>';
+            } else {
+                const container = document.createElement('div');
+                container.className = 'file-list-container';
+                const header = document.createElement('div');
+                header.className = 'file-list-header';
+                header.innerHTML = `
+                    <div class="file-col file-col-name">Name</div>
+                    <div class="file-col file-col-url">Url</div>
+                    <div class="file-col file-col-delete">Delete</div>
                 `;
-                list.appendChild(fileItem);
-            });
+                container.appendChild(header);
 
-            container.appendChild(list);
-            fileListWrapper.appendChild(container);
-            addDeleteListeners();
+                const list = document.createElement('div');
+                list.id = 'file-list';
+
+                files.forEach((fileData) => {
+                    const fullUrl = `${window.location.origin}${fileData.url}`;
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'file-list-item';
+                    fileItem.innerHTML = `
+                        <div class="file-col file-col-name">
+                            <span class="file-icon"><img src="../static/img/icon/Group.png" alt="file icon"></span>
+                            <span class="file-name" title="${fileData.name}">${fileData.name}</span>
+                        </div>
+                        <div class="file-col file-col-url">
+                            <a href="${fullUrl}" target="_blank">${fullUrl}</a>
+                        </div>
+                        <div class="file-col file-col-delete">
+                            <button class="delete-btn" data-filename="${fileData.name}"><img src="../static/img/icon/delete.png" alt="delete icon"></button>
+                        </div>
+                    `;
+                    list.appendChild(fileItem);
+                });
+
+                container.appendChild(list);
+                fileListWrapper.appendChild(container);
+                addDeleteListeners();
+            }
+        } catch (error) {
+            console.error(error);
+            fileListWrapper.innerHTML = '<p class="upload__prompt-error">Error loading images from server.</p>';
         }
-
         updateTabStyles();
     };
 
     const addDeleteListeners = () => {
         document.querySelectorAll('.delete-btn').forEach(button => {
-            button.addEventListener('click', (event) => {
-                const indexToDelete = parseInt(event.currentTarget.dataset.index);
-                let storedFiles = JSON.parse(localStorage.getItem('uploadedImages')) || [];
-                storedFiles.splice(indexToDelete, 1);
-                localStorage.setItem('uploadedImages', JSON.stringify(storedFiles));
-                displayFiles();
+            button.addEventListener('click', async (event) => {
+//                const filename = event.currentTarget.dataset.filename;
+//                fetch('/api/delete?file=${filename}', {method: 'DELETE'})
             });
         });
     };
