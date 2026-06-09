@@ -85,8 +85,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const addDeleteListeners = () => {
         document.querySelectorAll('.delete-btn').forEach(button => {
             button.addEventListener('click', async (event) => {
-//                const filename = event.currentTarget.dataset.filename;
-//                fetch('/api/delete?file=${filename}', {method: 'DELETE'})
+                const filename = event.currentTarget.dataset.filename;
+
+                if (!confirm(`Are you sure you want to delete ${filename}?`)) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/api/delete?file=${filename}`, {method: 'DELETE'});
+
+                    if (response.ok) {
+                        displayFiles();
+                    } else {
+                        const errData = await response.json();
+                        alert(`Failed to delete file: ${errData.message || response.statusText}`);
+                    }
+                } catch (error) {
+                    console.error('Delete error:', error);
+                    alert('Network error. Failed to delete file.');
+                }
+
             });
         });
     };
