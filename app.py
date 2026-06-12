@@ -1,3 +1,4 @@
+import logging
 import http.server
 import socketserver
 from pathlib import Path
@@ -5,22 +6,15 @@ from pathlib import Path
 import json
 from urllib.parse import urlparse, parse_qs
 
-from file_handler import validate_file, UPLOAD_DIR
-
-MAX_FILES = 10
-MAX_REQUEST_SIZE = 50 * 1024 * 1024
-CONTENT_TYPES = {
-            '.css': 'text/css',
-            '.js': 'application/javascript',
-            '.png': 'image/png',
-            '.jpg': 'image/jpg',
-            '.jpeg': 'image/jpeg',
-            '.gif': 'image/gif',
-            '.html': 'text/html'
-        }
+from config.config import SERVER_PORT, MAX_FILES, MAX_REQUEST_SIZE, CONTENT_TYPES, UPLOAD_DIR
+from file_handler import validate_and_save
+from logger_config import logger
 
 
 class ImageServerHandler(http.server.BaseHTTPRequestHandler):
+    def log_message(self, format, *args):
+        logger.debug("%s - - %s" % (self.address_string(), format % args))
+
     def do_GET(self):
         routes = {
             '/': lambda: self.server_response('form/index.html'),
@@ -39,8 +33,10 @@ class ImageServerHandler(http.server.BaseHTTPRequestHandler):
 
     def do_POST(self):
         if self.path == '/upload':
+            logger.debug("POST /upload request received")
             self.handle_upload()
         else:
+            logger.error(f"Unknown POST path: {self.path}")
             self.send_response(404)
             self.end_headers()
 
@@ -48,6 +44,7 @@ class ImageServerHandler(http.server.BaseHTTPRequestHandler):
         if self.path.startswith('/api/delete'):
             self.handle_delete()
         else:
+            logger.error(f"Unknown DELETE path: {self.path}")
             self.send_response(404)
             self.end_headers()
 
@@ -69,6 +66,8 @@ class ImageServerHandler(http.server.BaseHTTPRequestHandler):
 
             for part in parts:
                 if counter > MAX_FILES:
+                    logger.warning(f"Too many files, aborting")
+
                     return False, f"Too many files! Maximum allowed is {MAX_FILES} per request."
 
                 if b'Content-Disposition' in part and b'name="images"' in part:
@@ -94,13 +93,14 @@ class ImageServerHandler(http.server.BaseHTTPRequestHandler):
             return True, uploaded_files
 
         except Exception as e:
-            # logging.error(f"Критична помилка сервера: {e}", exc_info=True)
+            logger.error(e, exc_info=logger.isEnabledFor(logging.DEBUG))
             return False, "No files uploaded or data is corrupted"
 
     def handle_upload(self):
         content_length = int(self.headers.get('Content-Length', 0))
 
         if content_length > MAX_REQUEST_SIZE:
+            logger.warning(f"Request entity too large, aborting")
             self.send_json_response(413, {
                 "status": "error",
                 "message": "Request entity too large!"
@@ -110,6 +110,7 @@ class ImageServerHandler(http.server.BaseHTTPRequestHandler):
         content_type = self.headers.get('Content-Type', '')
 
         if not content_type.startswith('multipart/form-data'):
+            logger.error(f"Unsupported Content-Type: {content_type}")
             self.send_json_response(400, {"status": "error", "message": "Expected multipart/form-data"})
             return
 
@@ -121,28 +122,34 @@ class ImageServerHandler(http.server.BaseHTTPRequestHandler):
             return
 
         response_files = []
+        invalid_files = 0
 
         for file_data in result:
             file_bytes = file_data["bytes"]
             filename = file_data["filename"]
 
-            is_valid, message, unique_name = validate_file(file_bytes, filename)
+            is_valid, message, unique_name = validate_and_save(file_bytes, filename)
 
             if is_valid:
+                logger.debug(F"File {filename} successfully uploaded to server")
                 response_files.append({
                     "original_name": filename,
                     "url": f"/images/{unique_name}"
                 })
             else:
-                print(f"File {filename} failed server validation: {message}")
+                logger.warning(f"File {filename} failed server validation: {message}")
+                invalid_files += 1
 
         if not response_files:
+            logger.info("All uploaded files failed validation.")
             self.send_json_response(400, {"status": "error", "message": "All uploaded files failed validation."})
             return
 
+        # logger.debug(f"Uploaded files: {response_files}")
         self.send_json_response(200, {
             "status": "success",
-            "files": response_files
+            "files": response_files,
+            "invalid_files": invalid_files
         })
 
     def handle_get_images(self):
@@ -155,6 +162,8 @@ class ImageServerHandler(http.server.BaseHTTPRequestHandler):
                     "url": f"/images/{f.name}"
                 })
             files.sort(key=lambda x: (UPLOAD_DIR / x["name"]).stat().st_mtime, reverse=True)
+        else:
+            logger.debug("No upload directory found")
 
         self.send_json_response(200, {"status": "success", "images": files})
 
@@ -165,6 +174,7 @@ class ImageServerHandler(http.server.BaseHTTPRequestHandler):
             file_param = params.get('file')
 
             if not file_param:
+                logger.error(f"No file param found: {self.path}")
                 self.send_json_response(400, {"status": "error", "message": "Missing 'file' parameter"})
                 return
 
@@ -172,19 +182,22 @@ class ImageServerHandler(http.server.BaseHTTPRequestHandler):
             file_path = UPLOAD_DIR / filename
 
             if UPLOAD_DIR.resolve() in file_path.resolve().parents and file_path.exists() and file_path.is_file():
+                logger.info(f"File {filename} successfully deleted from server")
                 file_path.unlink()
                 self.send_json_response(200, {"status": "success", "message": f"File {filename} deleted"})
             else:
+                logger.warning(f"File {filename} not found on server")
                 self.send_json_response(404, {"status": "error", "message": "File not found or access denied"})
         except Exception as e:
+            logger.error(e, exc_info=True)
             self.send_json_response(500, {"status": "error", "message": "Internal server error"})
-
 
     def server_response(self, path):
         try:
             file_path = Path(__file__).parent / path.lstrip('/')
 
             if not file_path.exists() or not file_path.is_file():
+                logger.warning(f"server_response: File {path} not found on server")
                 self.send_response(404)
                 self.end_headers()
                 return
@@ -202,23 +215,24 @@ class ImageServerHandler(http.server.BaseHTTPRequestHandler):
             self.wfile.write(content)
 
         except FileNotFoundError as e:
+            logger.error(e, exc_info=True)
             self.send_response(500)
             self.end_headers()
 
-def run_server(port=8000):
+def run_server(port):
     try:
         with socketserver.TCPServer(("", port), ImageServerHandler) as httpd:
-            print(f"Server running on port {port} ...", "http://localhost:8000/", sep="\n")
+            logger.sys(f"Server running on port {port}")
             try:
                 httpd.serve_forever()
             except KeyboardInterrupt:
-                print("Server stopped by user")
+                logger.sys(f"Server stopped by user")
     except OSError as e:
         if e.errno == 48:
-            print(f"Port {port} is already in use. Please stop the server | lsof -ti :{port} | xargs kill -9")
+            logger.sys(f"Port {port} is already in use. Please stop the server | lsof -ti :{port} | xargs kill -9")
         else:
-            print(f"Error starting server: {e}")
+            logger.sys(f"Error starting server: {e}")
 
 
 if __name__ == "__main__":
-    run_server()
+    run_server(SERVER_PORT)

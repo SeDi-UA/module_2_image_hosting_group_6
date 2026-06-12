@@ -104,7 +104,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.error('Delete error:', error);
                     alert('Network error. Failed to delete file.');
                 }
-
             });
         });
     };

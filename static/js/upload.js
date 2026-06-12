@@ -92,7 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const allowedTypes = ['image/jpg','image/jpeg', 'image/png', 'image/gif'];
-        const MAX_SIZE_BYTES = 2 * 1024 * 1024;
+        const MAX_SIZE_BYTES = 5 * 1024 * 1024;
 
         const validFiles = [];
         const skippedFiles = [];
@@ -122,7 +122,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (skippedFiles.length > 0) {
                 changeDropzoneState('result', `Uploaded ${validFiles.length} file(s). Skipped ${skippedFiles.length} invalid file(s).`, 'success');
             } else {
-                changeDropzoneState('result', "All files uploaded successfully!", 'success');
+                if (result.invalid_files > 0) {
+                    changeDropzoneState('result', `Uploaded ${result.files.length} file(s). Skipped ${result.invalid_files} invalid file(s).`, 'success');
+                } else {
+                    changeDropzoneState('result', "All files uploaded successfully!", 'success');
+                }
             }
 
         } catch (error) {
@@ -143,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         uploadedContainer.style.display = 'block';
 
-        uploadedFiles.forEach((file, index) => {
+        uploadedFiles.forEach((file) => {
             const fullUrl = `${window.location.origin}${file.url}`;
             const labelGroup = document.createElement('div');
             labelGroup.className = 'upload__link-group';
