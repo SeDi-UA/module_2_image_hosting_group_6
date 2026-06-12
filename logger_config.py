@@ -1,3 +1,4 @@
+# logger_config.py
 import logging
 
 from config.config import LOG_DIR, LOG_FILE_PATH, LOG_LEVEL

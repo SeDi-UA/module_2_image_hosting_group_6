@@ -1,3 +1,4 @@
+//index.js
 const allImgBlocks = document.querySelectorAll('.hero__img');
 const randomIndex = Math.floor(Math.random() * allImgBlocks.length);
 const randomBlock = allImgBlocks[randomIndex];

@@ -1,3 +1,4 @@
+# app.py
 import logging
 import http.server
 import socketserver
@@ -211,8 +212,11 @@ class ImageServerHandler(http.server.BaseHTTPRequestHandler):
             if path.startswith('images/'):
                 self.send_header('Cache-Control', 'public, max-age=3600')
 
-            self.end_headers()
-            self.wfile.write(content)
+            try:
+                self.end_headers()
+                self.wfile.write(content)
+            except ConnectionError as e:
+                logger.debug(f"Client disconnected early while serving {path}: {e}")
 
         except FileNotFoundError as e:
             logger.error(e, exc_info=True)

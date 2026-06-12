@@ -1,3 +1,4 @@
+//images.js
 document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('keydown', function (event) {
         if (event.key === 'F5' || event.key === 'Escape') {

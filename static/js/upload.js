@@ -1,3 +1,4 @@
+//upload.js
 document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('keydown', function (event) {
         if (event.key === 'Escape' || event.key === 'F5') {
