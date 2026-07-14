@@ -4,6 +4,7 @@ from pathlib import Path
 
 
 SERVER_PORT = 8000
+EXTERNAL_PORT = int(os.getenv("EXTERNAL_PORT", SERVER_PORT))
 
 BASE_DIR = Path(__file__).parent.parent
 

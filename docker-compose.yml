@@ -12,6 +12,7 @@ services:
       - UPLOAD_DIR=/app/images
       - LOG_DIR=/app/logs
       - LOG_FILE_PATH=/app/logs/server.log
+      - EXTERNAL_PORT=8080
     restart: always
 
   nginx:

@@ -7,7 +7,7 @@ from pathlib import Path
 import json
 from urllib.parse import urlparse, parse_qs
 
-from config import SERVER_PORT, MAX_FILES, MAX_REQUEST_SIZE, CONTENT_TYPES, UPLOAD_DIR, BASE_DIR
+from config import SERVER_PORT, EXTERNAL_PORT, MAX_FILES, MAX_REQUEST_SIZE, CONTENT_TYPES, UPLOAD_DIR, BASE_DIR
 from file_handler import validate_and_save
 from logger_config import logger
 
@@ -230,7 +230,13 @@ class ImageServerHandler(http.server.BaseHTTPRequestHandler):
 def run_server(port):
     try:
         with socketserver.TCPServer(("", port), ImageServerHandler) as httpd:
-            logger.sys(f"Server running on port {port}")
+            logger.sys(f"Backend service initialized on internal port {port}")
+
+            if EXTERNAL_PORT != port:
+                logger.sys(f"👉 Access the application via proxy at: http://localhost:{EXTERNAL_PORT}")
+            else:
+                logger.sys(f"👉 Access the application locally at: http://localhost:{port}")
+
             try:
                 httpd.serve_forever()
             except KeyboardInterrupt:
