@@ -7,7 +7,7 @@ from pathlib import Path
 import json
 from urllib.parse import urlparse, parse_qs
 
-from config.config import SERVER_PORT, MAX_FILES, MAX_REQUEST_SIZE, CONTENT_TYPES, UPLOAD_DIR
+from config import SERVER_PORT, MAX_FILES, MAX_REQUEST_SIZE, CONTENT_TYPES, UPLOAD_DIR, BASE_DIR
 from file_handler import validate_and_save
 from logger_config import logger
 
@@ -195,7 +195,10 @@ class ImageServerHandler(http.server.BaseHTTPRequestHandler):
 
     def server_response(self, path):
         try:
-            file_path = Path(__file__).parent / path.lstrip('/')
+            if path.startswith("/images"):
+                file_path = BASE_DIR / path.lstrip('/')
+            else:
+                file_path = Path(__file__).parent / path.lstrip('/')
 
             if not file_path.exists() or not file_path.is_file():
                 logger.warning(f"server_response: File {path} not found on server")
@@ -208,6 +211,7 @@ class ImageServerHandler(http.server.BaseHTTPRequestHandler):
             self.send_response(200)
             content_type = CONTENT_TYPES.get(file_path.suffix.lower(), 'application/octet-stream')
             self.send_header('Content-type', content_type)
+            self.send_header('Content-Length', str(len(content)))
 
             if path.startswith('images/'):
                 self.send_header('Cache-Control', 'public, max-age=3600')

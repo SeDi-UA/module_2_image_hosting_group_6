@@ -1,10 +1,13 @@
 # logger_config.py
 import logging
 
-from config.config import LOG_DIR, LOG_FILE_PATH, LOG_LEVEL
+from config import LOG_DIR, LOG_FILE_PATH, LOG_LEVEL
 
-LOG_DIR.mkdir(exist_ok=True)
 
+try:
+    LOG_DIR.mkdir(exist_ok=True)
+except PermissionError:
+    pass
 
 logging.addLevelName(45, "SYSTEM")
 

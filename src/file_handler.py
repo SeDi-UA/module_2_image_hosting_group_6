@@ -4,7 +4,7 @@ import uuid
 from PIL import Image
 from pathlib import Path
 
-from config.config import ALLOWED_EXTENSIONS, MAX_FILE_SIZE, UPLOAD_DIR
+from config import ALLOWED_EXTENSIONS, MAX_FILE_SIZE, UPLOAD_DIR
 
 UPLOAD_DIR.mkdir(exist_ok=True)
 
@@ -20,12 +20,10 @@ def check_image(file, file_ext): #Pillow
     except Exception:
         return False, "Failed to read file"
 
-
 def check_size(file_size):
     if file_size > MAX_FILE_SIZE:
         return False, "File too large (maximum 5 MB)"
     return True, None
-
 
 def validate_and_save(file, filename):
     is_valid_size, msg = check_size(len(file))

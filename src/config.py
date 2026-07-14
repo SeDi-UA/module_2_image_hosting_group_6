@@ -1,4 +1,5 @@
 # config.py
+import os
 from pathlib import Path
 
 
@@ -21,10 +22,10 @@ CONTENT_TYPES = {
 ALLOWED_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif'}
 MAX_FILE_SIZE = 5 * 1024 * 1024
 
-UPLOAD_DIR = BASE_DIR / 'images'
+UPLOAD_DIR = Path(os.getenv("UPLOAD_DIR", str(BASE_DIR / 'images')))
 
-LOG_DIR = BASE_DIR / 'logs'
-LOG_FILE_PATH = LOG_DIR / 'server.log'
+LOG_DIR = Path(os.getenv("LOG_DIR", str(BASE_DIR / 'logs')))
+LOG_FILE_PATH = Path(os.getenv("LOG_FILE_PATH", str(LOG_DIR / 'server.log')))
 
 #'DEBUG', 'INFO', 'WARNING', 'ERROR'
 LOG_LEVEL = 'DEBUG'
