@@ -28,5 +28,11 @@ UPLOAD_DIR = Path(os.getenv("UPLOAD_DIR", str(BASE_DIR / 'images')))
 LOG_DIR = Path(os.getenv("LOG_DIR", str(BASE_DIR / 'logs')))
 LOG_FILE_PATH = Path(os.getenv("LOG_FILE_PATH", str(LOG_DIR / 'server.log')))
 
+DB_HOST = os.getenv("DB_HOST")
+DB_PORT = int(os.getenv("DB_PORT"))
+DB_NAME = os.getenv("DB_NAME")
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+
 #'DEBUG', 'INFO', 'WARNING', 'ERROR'
 LOG_LEVEL = 'DEBUG'
