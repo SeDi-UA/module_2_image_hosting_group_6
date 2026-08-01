@@ -14,7 +14,7 @@ services:
       - DB_HOST=db
       - DB_PORT=5432
       - DB_NAME=images_db
-      - DB_USER=postgres
+      - DB_USER=pgPyAdmin
       - DB_PASSWORD=QazXsw1423!
     depends_on:
       db:
@@ -44,7 +44,7 @@ services:
     container_name: postgres_db
     environment:
       - POSTGRES_DB=images_db
-      - POSTGRES_USER=postgres
+      - POSTGRES_USER=pgPyAdmin
       - POSTGRES_PASSWORD=QazXsw1423!
     ports:
       - "5432:5432"

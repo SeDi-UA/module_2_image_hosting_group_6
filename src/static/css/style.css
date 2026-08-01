@@ -1,3 +1,4 @@
+/* style.css */
 body {
     background-color: #F2F5FF;
     font-family: "Inter", sans-serif;
@@ -385,4 +386,42 @@ body {
 .delete-btn:hover {
     background: transparent;
     opacity: 0.7;
+}
+
+/* Pagination Container */
+.pagination {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 20px;
+    margin-bottom: 40px;
+}
+
+.pagination__btn {
+    padding: 6px 12px;
+    border: 1px solid rgb(0, 96, 255);
+    background-color: white;
+    color: rgb(0, 96, 255);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.pagination__btn:hover:not(.disabled) {
+    background-color: rgb(0, 96, 255);
+    color: white;
+}
+
+.pagination__btn.active {
+    background-color: rgb(0, 96, 255);
+    color: white;
+    font-weight: bold;
+}
+
+.pagination__btn.disabled {
+    border-color: #ccc;
+    color: #ccc;
+    cursor: not-allowed;
+    opacity: 0.6;
 }
