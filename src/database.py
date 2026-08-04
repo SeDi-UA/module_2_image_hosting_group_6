@@ -27,10 +27,8 @@ class DatabaseManager:
                     logger.info(f"Successfully connected to PostgreSQL. Version: {db_version[0]}")
                     return True
         except Exception as e:
-            # Якщо PostgreSQL на Windows прислав текстову помилку в CP1251/CP866
             if isinstance(e, psycopg2.OperationalError):
                 try:
-                    # Пробуємо безпечно розшифрувати байтову помилку
                     err_msg = str(e).encode('raw_unicode_escape').decode('cp1251', errors='replace')
                     logger.error(f"Database connection failed: {err_msg}")
                     return False

@@ -5,7 +5,6 @@ body {
     color: rgb(255, 255, 255);
 }
 
-/* Header */
 .header {
     display: flex;
     flex-direction: column;
@@ -25,7 +24,6 @@ body {
     font-size: 14px;
 }
 
-/* button */
 .header__button {
     display: flex;
     justify-content: center;
@@ -51,7 +49,6 @@ body {
     transition: background-color 0.2s ease;
 }
 
-/* hero__img */
 .hero {
     display: flex;
     justify-content: center;
@@ -72,7 +69,6 @@ body {
     object-fit: cover;
 }
 
-/* upload */
 .upload__intro {
     display: flex;
     flex-direction: column;
@@ -93,7 +89,6 @@ body {
     width: 400px;
 }
 
-/* nav_tabs */
 .nav__tabs {
     display: flex;
     justify-content: center;
@@ -119,7 +114,6 @@ body {
     transition: background-color 0.2s ease;
 }
 
-/* upload-form */
 .upload__form {
     display: flex;
     flex-direction: column;
@@ -203,7 +197,6 @@ body {
     color: rgb(173, 192, 248);
 }
 
-/* upload-current */
 .upload__container {
     display: flex;
     flex-direction: column;
@@ -235,7 +228,6 @@ body {
     margin-bottom: 15px;
 }
 
-/* input + button */
 .upload__label {
     display: flex;
     align-items: center;
@@ -296,7 +288,6 @@ body {
     color: #da0000;
 }
 
-/* Container for the entire table */
 .file-list-container {
     max-width: 800px;
     margin: 0 auto;
@@ -305,7 +296,6 @@ body {
     margin-bottom: 292px;
 }
 
-/* Common style for a row (both header and list item) */
 .file-list-header,
 .file-list-item {
     display: flex;
@@ -315,19 +305,16 @@ body {
     border-bottom: 1px solid #eef0f5;
 }
 
-/* Remove border from the last item */
 .file-list-item:last-child {
     border-bottom: none;
 }
 
-/* List header */
 .file-list-header {
     color: #8a96b1;
     font-size: 14px;
     font-weight: 500;
 }
 
-/* Styles for columns */
 .file-col {
     display: flex;
     align-items: center;
@@ -348,7 +335,6 @@ body {
     justify-content: center;
 }
 
-/* File icon */
 .file-icon {
     color: #0060ff;
     margin-right: 15px;
@@ -360,7 +346,6 @@ body {
     height: 32px;
 }
 
-/* File name */
 .file-name {
     color: #333;
     font-weight: 500;
@@ -370,7 +355,6 @@ body {
     text-overflow: ellipsis;
 }
 
-/* Delete button */
 .delete-btn {
     background: transparent;
     border: none;
@@ -388,7 +372,6 @@ body {
     opacity: 0.7;
 }
 
-/* Pagination Container */
 .pagination {
     display: flex;
     justify-content: center;

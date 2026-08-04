@@ -9,7 +9,7 @@ from config import ALLOWED_EXTENSIONS, MAX_FILE_SIZE, UPLOAD_DIR
 UPLOAD_DIR.mkdir(exist_ok=True)
 
 
-def check_image(file, file_ext): #Pillow
+def check_image(file, file_ext):
     if file_ext not in ALLOWED_EXTENSIONS:
         return False, f"Invalid file format. Expected:{', '.join(ALLOWED_EXTENSIONS)}"
     try:
